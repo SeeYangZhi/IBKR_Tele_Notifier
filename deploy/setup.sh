@@ -85,8 +85,23 @@ if ! ls "${TWS_PATH}"/ibgateway/*/jars >/dev/null 2>&1; then
   log "Installing IB Gateway (unattended)..."
   /tmp/ibgw.sh -q -dir /tmp/ibgw_install
   rm -f /tmp/ibgw.sh
-  VER=$(ls /tmp/ibgw_install | grep -oE '[0-9]+\.[0-9]+' | head -1)   # e.g. 10.45
-  TWS_MAJOR_VRSN=$(echo "${VER}" | tr -d '.')                          # e.g. 1045
+  # The installer drops a marker named like "IB Gateway 10.45.desktop"; take the
+  # version from the first entry carrying one. A glob loop rather than
+  # `ls | grep`, which mangles unusual filenames (shellcheck SC2010).
+  VER=""
+  for entry in /tmp/ibgw_install/*; do
+    [ -e "${entry}" ] || continue
+    name="${entry##*/}"
+    if [[ "${name}" =~ ([0-9]+\.[0-9]+) ]]; then
+      VER="${BASH_REMATCH[1]}"                                         # e.g. 10.45
+      break
+    fi
+  done
+  if [ -z "${VER}" ]; then
+    echo "Could not determine the IB Gateway version from /tmp/ibgw_install" >&2
+    exit 1
+  fi
+  TWS_MAJOR_VRSN="${VER//./}"                                          # e.g. 1045
   mkdir -p "${TWS_PATH}/ibgateway"
   rm -rf "${TWS_PATH}/ibgateway/${TWS_MAJOR_VRSN}"
   mv /tmp/ibgw_install "${TWS_PATH}/ibgateway/${TWS_MAJOR_VRSN}"
