@@ -1,0 +1,19 @@
+[Unit]
+Description=x11vnc on display :99, bound to localhost only (one-time Gateway GUI config + first login)
+Requires=xvfb.service
+After=xvfb.service
+
+[Service]
+Type=simple
+User=@USER@
+Environment=DISPLAY=:99
+# -localhost: only reachable via an SSH tunnel, never exposed on the public IP.
+# -forever / -shared: survive client disconnects and allow reconnects.
+# Bound to localhost (SSH-tunnel only); a VNC password is set anyway so macOS
+# Screen Sharing connects without complaint. Password file: ~/.vnc/passwd.
+ExecStart=/usr/bin/x11vnc -display :99 -localhost -forever -shared -rfbauth @HOME@/.vnc/passwd -quiet -rfbport 5900
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,27 @@
+[Unit]
+Description=IB Gateway (LIVE) supervised by IBC, on virtual display :99
+Requires=xvfb.service
+After=xvfb.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+Environment=DISPLAY=:99
+Environment=TZ=@TZ@
+# Version-specific paths (TWS_MAJOR_VRSN etc.) are written by setup.sh after
+# IB Gateway is installed, so this unit stays static and reviewable.
+EnvironmentFile=@IBC_HOME@/ibc.env
+ExecStart=@IBC_HOME@/run-gateway.sh
+# on-failure (NOT always): a yield to your mobile session is a CLEAN exit
+# (status 0), so systemd leaves the Gateway down — no relaunch loop, no repeated
+# 2FA pushes. Real crashes exit non-zero and still auto-recover. Bring it back
+# after mobile use with the ops bot's /resume, or:
+#   sudo systemctl restart ibc-gateway   (one 2FA tap).
+Restart=on-failure
+RestartSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

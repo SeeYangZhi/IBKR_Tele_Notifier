@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --group dev --python ${{ matrix.python-version }}
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Test
+        run: uv run pytest -q
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shell scripts
+        # Templates are checked too; they are valid bash before substitution.
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck -S warning deploy.sh deploy/setup.sh deploy/remote-deploy.sh
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assert no credentials in the IBC config template
+        # deploy/config.ini is tracked and MUST stay credential-free; a filled
+        # copy lives only on the host. This is the guard for the one mistake
+        # that would be worst to make twice.
+        run: |
+          if grep -qE '^\s*Ib(LoginId|Password)\s*=\s*\S' deploy/config.ini; then
+            echo "::error file=deploy/config.ini::IbLoginId/IbPassword must be blank in the tracked template"
+            exit 1
+          fi
+          echo "deploy/config.ini is credential-free."
+
+      - name: Assert no .env file is tracked
+        run: |
+          if git ls-files --error-unmatch .env .env.test 2>/dev/null; then
+            echo "::error::a .env file is tracked — it must be gitignored"
+            exit 1
+          fi
+          echo "no .env files tracked."

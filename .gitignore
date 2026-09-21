@@ -1,0 +1,34 @@
+# --- Secrets: never commit ---------------------------------------------------
+# Runtime credentials (Telegram tokens, chat ids). Only env.example is tracked.
+.env
+.env.*
+!env.example
+# Deploy target (host, zone, remote user). Only deploy.env.example is tracked.
+deploy/deploy.env
+# IBC config once it holds a real IBKR login/password. The blank template in
+# deploy/config.ini IS tracked; a filled copy must never be.
+deploy/config.local.ini
+
+# --- Runtime state -----------------------------------------------------------
+seen_execids*.json
+# Written on the host by deploy/remote-deploy.sh to switch prod/test channel.
+channel.env
+*.log
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# --- Editor / OS -------------------------------------------------------------
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# --- Agent tooling -----------------------------------------------------------
+.claude/settings.local.json

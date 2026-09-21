@@ -1,0 +1,25 @@
+[Unit]
+Description=IBKR -> Telegram trade notifier (read-only)
+# Self-reconnects to Gateway, so we do NOT hard-depend on ibc-gateway.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@PROJECT_DIR@
+Environment=TZ=@TZ@
+# Optional channel switch written by deploy/remote-deploy.sh (prod|test).
+# Leading '-' = ignore if absent. Lets ./deploy.sh switch channels without
+# touching /etc, so the ops sudo grant stays restart-only.
+EnvironmentFile=-@PROJECT_DIR@/channel.env
+# uv runs the script inside the project venv it manages.
+ExecStart=@UV@ run --project @PROJECT_DIR@ python ibkr_telegram_notifier.py
+Restart=always
+RestartSec=10
+# Logs go to journald (journalctl -u ibkr-notifier)
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

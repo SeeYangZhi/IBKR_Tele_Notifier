@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Launches IB Gateway (LIVE) under IBC with explicit args. Invoked by
+# ibc-gateway.service. TWS_MAJOR_VRSN comes from ibc.env (EnvironmentFile).
+# Rendered from this template by deploy/setup.sh -> @IBC_HOME@/run-gateway.sh
+set -euo pipefail
+
+exec @IBC_PATH@/scripts/ibcstart.sh "${TWS_MAJOR_VRSN}" --gateway \
+  --mode=live \
+  --ibc-path=@IBC_PATH@ \
+  --ibc-ini=@IBC_HOME@/config.ini \
+  --tws-path=@TWS_PATH@ \
+  --tws-settings-path=@TWS_PATH@ \
+  --on2fatimeout=restart

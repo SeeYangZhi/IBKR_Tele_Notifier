@@ -1,0 +1,14 @@
+[Unit]
+Description=Xvfb virtual display :99 (headless GUI host for IB Gateway)
+After=network.target
+
+[Service]
+Type=simple
+User=@USER@
+# 1024x768x24 is plenty for the Gateway window; screen 0.
+ExecStart=/usr/bin/Xvfb :99 -screen 0 1024x768x24 -nolisten tcp
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

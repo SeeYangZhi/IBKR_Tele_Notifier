@@ -1,0 +1,21 @@
+[Unit]
+Description=IBKR notifier ops-control bot (Telegram commands -> systemctl)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@PROJECT_DIR@
+Environment=TZ=@TZ@
+# Reads OPS_BOT_TOKEN / OPS_CHAT_ID from .env. Restarts/stops ibc-gateway via
+# passwordless sudo on /resume /pause. Independent of the notifier so it still
+# works (and can bring the gateway back) when everything else is down.
+ExecStart=@UV@ run --project @PROJECT_DIR@ python ibkr_ops_bot.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
