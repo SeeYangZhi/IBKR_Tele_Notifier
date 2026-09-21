@@ -62,7 +62,7 @@ if [ -f "${SRC}/uv.lock" ]; then cp "${SRC}/uv.lock" "${PROJECT_DIR}/"; fi
 cd "${PROJECT_DIR}"
 "${UV}" sync --no-dev
 log "Verifying imports..."
-"${UV}" run python -c "import ib_async, httpx, dotenv; print('imports OK')"
+"${UV}" run --no-dev python -c "import ib_async, httpx, dotenv; print('imports OK')"
 # Create .env from example if absent; user fills it in. chmod 600.
 if [ ! -f "${PROJECT_DIR}/.env" ]; then
   cp "${PROJECT_DIR}/env.example" "${PROJECT_DIR}/.env"
