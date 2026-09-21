@@ -21,7 +21,7 @@ UV="${UV:-$HOME/.local/bin/uv}"
 command -v "$UV" >/dev/null 2>&1 || UV=uv
 
 cd "$REMOTE"
-"$UV" sync >/tmp/uvsync.log 2>&1 || { echo "uv sync FAILED:"; tail -5 /tmp/uvsync.log; exit 1; }
+"$UV" sync --no-dev >/tmp/uvsync.log 2>&1 || { echo "uv sync FAILED:"; tail -5 /tmp/uvsync.log; exit 1; }
 
 case "$MODE" in
   prod)  : > "$CHANNEL_ENV" ;;                       # empty -> notifier loads .env

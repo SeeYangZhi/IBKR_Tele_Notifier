@@ -151,7 +151,29 @@ cp deploy/deploy.env.example deploy/deploy.env   # then edit
 push systemd units or `config.ini`. After editing a `*.service.tmpl`, re-run
 `./deploy/setup.sh` on the host — it is idempotent and will re-render them.
 
+**Re-running `setup.sh` on a live host is safe.** It will not restart `xvfb` or
+`x11vnc` if they are already up — bouncing the display would kill IB Gateway and
+cost you a 2FA push — and it never restarts `ibc-gateway` for the same reason. It
+does restart `ibkr-notifier` and `ibkr-ops-bot` if they are running, so they pick
+up the re-rendered units. If a unit change affects the gateway, restart it
+yourself when you are ready to approve the 2FA.
+
 Gateway recovery after mobile use is normally `/resume` in Telegram, not a deploy.
+
+## Upgrading an existing install
+
+Pull the new code onto the host and re-run the installer:
+
+```bash
+cd ~/ibkr-src && git pull && ./deploy/setup.sh
+```
+
+It re-renders the units, restarts the notifier and ops bot, and leaves the
+display and gateway running. It also migrates the legacy channel switch: older
+installs selected the test channel with a systemd drop-in at
+`/etc/systemd/system/ibkr-notifier.service.d/test-channel.conf`, which is now
+`channel.env` in the project directory. The current setting is carried over, so
+a host on TEST stays on TEST, and the obsolete drop-in is removed.
 
 ## The 2FA and mobile-use model
 
@@ -175,4 +197,5 @@ push — is documented in
 | No fills reported, but positions work | `IB_CLIENT_ID` does not match the Gateway's Master API Client ID. |
 | `"API support is not available…"` | IBKR Lite account. Upgrade to Pro. |
 | Ops bot `/resume` does nothing | Sudoers rule missing or unit renamed. Check `sudo -n /usr/bin/systemctl restart ibc-gateway` as the service user. |
+| `./deploy.sh test` doesn't switch channel | Unit predates `channel.env`. Re-run `./deploy/setup.sh` on the host; it migrates the old drop-in automatically. |
 | Repeated 2FA pushes | Gateway unit set to `Restart=always`. It must be `on-failure`. |

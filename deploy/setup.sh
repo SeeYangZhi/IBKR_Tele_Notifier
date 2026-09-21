@@ -60,7 +60,7 @@ if [ -f "${SRC}/uv.lock" ]; then cp "${SRC}/uv.lock" "${PROJECT_DIR}/"; fi
 # README placeholder so pyproject's readme field resolves.
 [ -f "${PROJECT_DIR}/README.md" ] || echo "# IBKR Tele Notifier" > "${PROJECT_DIR}/README.md"
 cd "${PROJECT_DIR}"
-"${UV}" sync
+"${UV}" sync --no-dev
 log "Verifying imports..."
 "${UV}" run python -c "import ib_async, httpx, dotenv; print('imports OK')"
 # Create .env from example if absent; user fills it in. chmod 600.
@@ -189,11 +189,63 @@ for u in "${UNITS[@]}"; do
       "${SRC}/deploy/${u}.service.tmpl" | sudo tee "/etc/systemd/system/${u}.service" >/dev/null
 done
 sudo systemctl daemon-reload
+
+# --- Migrate the legacy channel switch -------------------------------------
+# Older installs selected the test channel with a systemd drop-in in /etc.
+# That is now channel.env in the project dir. Carry the current setting over so
+# a host on TEST stays on TEST, then drop the obsolete file.
+LEGACY_DROPIN=/etc/systemd/system/ibkr-notifier.service.d/test-channel.conf
+if [ -f "${LEGACY_DROPIN}" ]; then
+  if grep -q '\.env\.test' "${LEGACY_DROPIN}"; then
+    printf 'ENV_FILE=%s/.env.test\n' "${PROJECT_DIR}" > "${PROJECT_DIR}/channel.env"
+    log "Migrated legacy TEST-channel drop-in -> ${PROJECT_DIR}/channel.env"
+  else
+    : > "${PROJECT_DIR}/channel.env"
+    log "Migrated legacy drop-in (PROD) -> ${PROJECT_DIR}/channel.env"
+  fi
+  sudo rm -f "${LEGACY_DROPIN}"
+  sudo rmdir /etc/systemd/system/ibkr-notifier.service.d 2>/dev/null || true
+  sudo systemctl daemon-reload
+fi
+
 # Enable all so they come back on boot. Start only the display + VNC now;
 # Gateway/notifier start after you've put in credentials + done first login.
 sudo systemctl enable "${UNITS[@]}" >/dev/null 2>&1
-sudo systemctl restart xvfb x11vnc
-log "xvfb + x11vnc started. Gateway/notifier/ops-bot enabled but NOT started yet."
+
+# Start the display + VNC, but NEVER restart a display that is already up:
+# IB Gateway lives on :99, so bouncing Xvfb on a running host kills the Gateway
+# and forces a fresh login (i.e. a 2FA push). Re-running this installer to pick
+# up unit-template edits must stay safe on a live host.
+if systemctl is-active --quiet xvfb; then
+  log "xvfb already running — left alone (restarting it would kill IB Gateway)."
+else
+  sudo systemctl start xvfb
+  log "xvfb started."
+fi
+if systemctl is-active --quiet x11vnc; then
+  log "x11vnc already running — left alone."
+else
+  sudo systemctl start x11vnc
+  log "x11vnc started."
+fi
+
+# Units were re-rendered above; a running notifier/ops-bot needs a restart to
+# pick them up. The gateway is deliberately NOT touched (that would cost a 2FA).
+RESTART=()
+for u in ibkr-notifier ibkr-ops-bot; do
+  if systemctl is-active --quiet "$u"; then RESTART+=("$u"); fi
+done
+if [ ${#RESTART[@]} -gt 0 ]; then
+  log "Restarting to pick up re-rendered units: ${RESTART[*]}"
+  sudo systemctl restart "${RESTART[@]}"
+  sleep 3
+  for u in "${RESTART[@]}"; do log "  ${u}: $(systemctl is-active "$u")"; done
+  log "NOTE: ibc-gateway was NOT restarted (that would trigger a 2FA push)."
+  log "SETUP COMPLETE."
+  exit 0
+fi
+
+log "Gateway/notifier/ops-bot enabled but NOT started yet."
 log ""
 log "NEXT STEPS:"
 log "  1. Fill in ${PROJECT_DIR}/.env          (Telegram tokens, chat ids)"
