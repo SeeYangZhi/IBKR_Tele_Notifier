@@ -19,10 +19,9 @@ dependencies = [
     "python-dotenv>=1.0",
 ]
 
-# TODO: replace OWNER/REPO with the real repository path before publishing.
 [project.urls]
-Homepage = "https://github.com/OWNER/REPO"
-Issues = "https://github.com/OWNER/REPO/issues"
+Homepage = "https://github.com/SeeYangZhi/IBKR_Tele_Notifier"
+Issues = "https://github.com/SeeYangZhi/IBKR_Tele_Notifier/issues"
 
 [dependency-groups]
 dev = [
