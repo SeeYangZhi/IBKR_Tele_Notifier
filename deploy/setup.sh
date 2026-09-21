@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Idempotent installer, run ON the host from a clone of this repo:
 #
-#   git clone <repo> ~/ibkr-src && cd ~/ibkr-src && ./deploy/setup.sh
+#   git clone https://github.com/SeeYangZhi/IBKR_Tele_Notifier ~/ibkr-src && cd ~/ibkr-src && ./deploy/setup.sh
 #
 # Installs system deps, the uv project, IB Gateway, IBC, the sudoers rule the
 # ops bot needs, and the 5 systemd units. Does NOT start the Gateway (that needs

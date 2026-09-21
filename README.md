@@ -25,14 +25,17 @@ It **never places or modifies orders**. Read-Only API is enforced at both the IB
 
 Operational signal (the "summary skipped: not connected" warning, Telegram-send failures, and error-log alerts) is routed to a **separate ops channel** (`OPS_BOT_TOKEN`/`OPS_CHAT_ID`) so the production channel stays purely trade-facing. Routine reconnect noise is excluded and alerts are de-duped.
 
-For the design rationale — the currency model, the `realizedPNL` semantics, why the fill sweep exists — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+For the design rationale — the currency model, the `realizedPNL` semantics, why the fill sweep exists — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). To deploy it, see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Requirements
 
 - An Interactive Brokers **Pro** account. IBKR Lite blocks API access entirely ("API support is not available for accounts that support free trading").
 - Python 3.11+ and [`uv`](https://docs.astral.sh/uv/).
 - A Telegram bot (from [@BotFather](https://t.me/BotFather)) that is an **admin** of your target channel.
-- For 24/7 operation: a Linux host to run IB Gateway. See [Deployment](#deployment).
+- For 24/7 operation, a host that is **x86-64**, apt-based (Debian 12 / Ubuntu 22.04+), running systemd, with 2 vCPU / 8 GB RAM.
+
+> [!IMPORTANT]
+> **ARM is not supported.** Interactive Brokers publishes no ARM64 build of IB Gateway, so Graviton, Ampere, Axion and Raspberry Pi cannot run this. Check your instance architecture before provisioning.
 
 ## Configuration
 
@@ -82,10 +85,12 @@ The tests use lightweight fakes — no IB Gateway, no network, no credentials.
 
 ## Deployment
 
-Runs under systemd on a headless Linux host, with IB Gateway driven by [IBC](https://github.com/IbcAlpha/IBC) under Xvfb. The installer is idempotent and derives every path from the invoking user:
+Runs under systemd on a headless x86-64 Linux host, with IB Gateway driven by [IBC](https://github.com/IbcAlpha/IBC) under Xvfb. **[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) is the step-by-step runbook** — host spec, an explicit split of which steps a person must do versus which can be automated, and verification at each checkpoint. Two steps (the Gateway GUI configuration and the first 2FA) cannot be automated by anyone; the runbook says exactly where those walls are.
+
+The installer is idempotent and derives every path from the invoking user:
 
 ```bash
-git clone <this-repo> ~/ibkr-src
+git clone https://github.com/SeeYangZhi/IBKR_Tele_Notifier ~/ibkr-src
 cd ~/ibkr-src
 ./deploy/setup.sh            # or: DEPLOY_TZ=Asia/Singapore ./deploy/setup.sh
 ```

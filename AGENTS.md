@@ -116,6 +116,7 @@ Top-level files owned directly by this root doc:
 - `env.example` — template for `.env`; documents every key.
 - `README.md` — user-facing overview, configuration, and run/deploy instructions.
 - `docs/ARCHITECTURE.md` — design rationale and the IBKR API gotchas. The most important doc in the repo.
+- `docs/DEPLOYMENT.md` — the deployment runbook: host requirements (x86-64 only), the agent-vs-human split with reasons, checkpointed phases, verification, and the operating rules for an agent on the host. Read it before deploying or advising on deployment.
 - `SECURITY.md` — threat model, credential handling, the ops-bot authorization model, the sudo grant.
 - `CONTRIBUTING.md` — setup, checks, review expectations.
 - `.github/workflows/ci.yml` — lint + tests on 3.11/3.12/3.13, shellcheck, and a guard asserting no credentials in `deploy/config.ini`.

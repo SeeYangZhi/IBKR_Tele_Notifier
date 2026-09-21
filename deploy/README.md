@@ -5,7 +5,10 @@ application. The approach here: a headless Linux host, a virtual X display
 (Xvfb), [IBC](https://github.com/IbcAlpha/IBC) to drive the Gateway's GUI through
 login, and systemd to supervise the lot.
 
-Any Linux host works. The installer derives every path from the invoking user.
+Any **x86-64** Linux host works; the installer derives every path from the
+invoking user. For a checkpointed procedure — including which steps a person
+must perform and which an agent can automate — see
+[../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md).
 
 ## What gets installed
 
@@ -31,8 +34,11 @@ Files in this directory:
 
 ## Prerequisites
 
-- A Linux host (Debian 12 is what this is tested on) with ~8 GB RAM. IB Gateway
-  is a JVM application and wants room.
+- An **x86-64** Linux host, apt-based (Debian 12 / Ubuntu 22.04+), running
+  systemd, with 2 vCPU / 8 GB RAM and 20 GB disk. IB Gateway is a JVM
+  application and wants room.
+  **ARM64 is not supported** — IBKR publishes no ARM build of IB Gateway, so
+  Graviton, Ampere, Axion and Raspberry Pi cannot run this.
 - An IBKR **Pro** account. IBKR Lite returns *"API support is not available for
   accounts that support free trading"* and the API never opens. There is no
   workaround.
@@ -43,7 +49,7 @@ Files in this directory:
 ## Install
 
 ```bash
-git clone <this-repo> ~/ibkr-src
+git clone https://github.com/SeeYangZhi/IBKR_Tele_Notifier ~/ibkr-src
 cd ~/ibkr-src
 ./deploy/setup.sh
 ```
